@@ -12,6 +12,17 @@ def list_users():
     print json.dumps(user)
 
 
+def show_user_details():
+  user_id = int(raw_input('Enter a user id: '))
+  api_endpoint = 'http://127.0.0.1:8000/users/%d/' % user_id
+  r = requests.get(api_endpoint)
+
+  if r.status_code == 200:
+    print r.text
+  else:
+    print 'Could not get user details'
+
+
 def create_user():
   username = raw_input('Enter a username: ')
   password = raw_input('Enter a password: ')
@@ -45,6 +56,7 @@ def start_cli():
     print '1: List user accounts'
     print '2: Create a user account'
     print "3: Delete a user's account"
+    print "4: Show a user's details"
     print '0: Quit'
 
     num = int(raw_input())
@@ -57,6 +69,8 @@ def start_cli():
       create_user()
     elif num == 3:
       delete_user()
+    elif num == 4:
+      show_user_details()
     else:
       exit(1)
 
