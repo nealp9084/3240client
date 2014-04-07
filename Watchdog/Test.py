@@ -6,6 +6,8 @@ import datetime
 import sys
 import time
 import sqlite3
+import requests
+import json
 
 from watchdog.events import LoggingEventHandler
 from watchdog.observers import Observer
@@ -41,13 +43,25 @@ class EventHandler(FileSystemEventHandler):
         # print str(datetime.datetime.now())
         timeInfo = str(datetime.datetime.now())
         # print " "
-        self.write_to_db(event.src_path, timeInfo, eventType)
+        self.upload_file(event.src_path, timeInfo, eventType)
+
+
+    def upload_file(self, filePath, time, eventType):
+        #read file
+        with open(filePath, 'r') as f:
+            file_cont = f.read()
+        params = {'current_user':1, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
+        r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
+        print r.text
+        serverID = json.loads(r.text)["file_id"]
+
+
+        self.write_to_db(filePath, time, eventType, serverID)
 
     #somehow get server id in there
-    def write_to_db(self, filePath, time, modType):
+    def write_to_db(self, filePath, time, modType, serverID):
         conn = sqlite3.connect(database)
         with conn:
-
             c = conn.cursor()
             # Create table
             c.execute('''CREATE TABLE if not exists fileData(
@@ -56,12 +70,16 @@ class EventHandler(FileSystemEventHandler):
                 date_stamp text,
                 modification_type text
                 );''')
-            # Save (commit) the changes
+            # Save (commit) the changes'
             conn.commit()
 
-            sql_cmd = "insert into fileData values(?, -1, ?, ?)"
-            c.execute(sql_cmd, (filePath, modType, time))
+            sql_cmd = "insert into fileData values(?, ?, ?, ?)"
+            c.execute(sql_cmd, (filePath, serverID, time, modType))
             conn.commit()
+
+
+
+
 
 
 if __name__ == "__main__":
