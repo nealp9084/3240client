@@ -43,7 +43,38 @@ class EventHandler(FileSystemEventHandler):
         # print str(datetime.datetime.now())
         timeInfo = str(datetime.datetime.now())
         # print " "
-        self.upload_file(event.src_path, timeInfo, eventType)
+        #compare the path the paths already in the db to determine if old file or new file
+        serverId = -1
+        if self.path_compare(event.src_path, serverId) is True:
+            self.update_file(event.src_path, )
+        else:
+            self.upload_file(event.src_path, timeInfo, eventType)
+
+
+
+    def path_compare(self, path_now, serverId):
+        conn = sqlite3.connect(database)
+        with conn:
+            c = conn.cursor()
+            if c.execute('''SELECT file_path AND server_id
+                            FROM fileData
+                            WHERE file_path = ?''', (path_now,)):
+                serverId = c.fetchall()
+                print serverId
+                return True
+            else:
+                return False
+
+
+
+    def update_file(self, filePath, serverId, time, eventType):
+        with open(filePath, 'r') as f:
+            file_cont = f.read()
+        params = {'current_user':1, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
+        r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
+        print r.text
+        serverID = json.loads(r.text)["file_id"]
+        self.write_to_db(filePath, time, eventType, serverID)
 
 
     def upload_file(self, filePath, time, eventType):
@@ -54,32 +85,26 @@ class EventHandler(FileSystemEventHandler):
         r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
         print r.text
         serverID = json.loads(r.text)["file_id"]
-
-
         self.write_to_db(filePath, time, eventType, serverID)
+
 
     #somehow get server id in there
     def write_to_db(self, filePath, time, modType, serverID):
         conn = sqlite3.connect(database)
         with conn:
             c = conn.cursor()
-            # Create table
-            c.execute('''CREATE TABLE if not exists fileData(
-                file_path text,
-                server_id text,
-                date_stamp text,
-                modification_type text
-                );''')
-            # Save (commit) the changes'
-            conn.commit()
-
             sql_cmd = "insert into fileData values(?, ?, ?, ?)"
             c.execute(sql_cmd, (filePath, serverID, time, modType))
             conn.commit()
 
-
-
-
+    def update_db(self, filePath, time, modType, serverID):
+        conn = sqlite3.connect(database)
+        with conn:
+            c = conn.cursor()
+            sql_cmd = ('''UPDATE fileData
+                        SET ''')
+            c.execute(sql_cmd, (filePath, serverID, time, modType))
+            conn.commit()
 
 
 if __name__ == "__main__":
@@ -97,6 +122,18 @@ if __name__ == "__main__":
     else:
         path = path+'\oneDir'
 
+    conn = sqlite3.connect(database)
+    with conn:
+        c = conn.cursor()
+        # Create table
+        c.execute('''CREATE TABLE if not exists fileData(
+            file_path text,
+            server_id text,
+            date_stamp text,
+            modification_type text
+            );''')
+        # Save (commit) the changes'
+        conn.commit()
 
     handler = LoggingEventHandler()
     observer = Observer()
