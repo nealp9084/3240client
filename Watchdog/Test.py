@@ -44,37 +44,50 @@ class EventHandler(FileSystemEventHandler):
         timeInfo = str(datetime.datetime.now())
         # print " "
         #compare the path the paths already in the db to determine if old file or new file
-        serverId = -1
-        if self.path_compare(event.src_path, serverId) is True:
-            self.update_file(event.src_path, )
+        if self.path_compare(event.src_path) is True:
+            self.update_file(event.src_path, timeInfo, eventType)
         else:
             self.upload_file(event.src_path, timeInfo, eventType)
 
 
 
-    def path_compare(self, path_now, serverId):
+    def path_compare(self, path_now):
         conn = sqlite3.connect(database)
         with conn:
             c = conn.cursor()
-            if c.execute('''SELECT file_path AND server_id
+            c.execute('''SELECT file_path AND server_id
                             FROM fileData
-                            WHERE file_path = ?''', (path_now,)):
-                serverId = c.fetchall()
-                print serverId
+                            WHERE file_path = ?''', (path_now,))
+            results = c.fetchall()
+            if results:
                 return True
             else:
                 return False
 
 
 
-    def update_file(self, filePath, serverId, time, eventType):
+    def update_file(self, filePath, time, eventType):
+        print "updating file"
+        conn = sqlite3.connect(database)
+        #serverId = -1
+        #print serverId
+
+        with conn:
+            c = conn.cursor()
+            #c.execute('''update fileData set server_id =(?) where file_path = (?)''', (serverId, filePath))
+            c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
+            serverId = int(c.fetchall()[0][0])
+            conn.commit()
+        print serverId
+
+        #by this point will have server id
         with open(filePath, 'r') as f:
             file_cont = f.read()
-        params = {'current_user':1, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
-        r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
-        print r.text
-        serverID = json.loads(r.text)["file_id"]
-        self.write_to_db(filePath, time, eventType, serverID)
+        params = {'current_user':1, "last_modified": time, 'file_data': file_cont}
+        r = requests.post("http://127.0.0.1:8000/sync/%d/update_file/" %serverId, data = params)
+
+        with open("file.html", 'w') as f:
+            f.write(r.text)
 
 
     def upload_file(self, filePath, time, eventType):
@@ -85,27 +98,12 @@ class EventHandler(FileSystemEventHandler):
         r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
         print r.text
         serverID = json.loads(r.text)["file_id"]
-        self.write_to_db(filePath, time, eventType, serverID)
-
-
-    #somehow get server id in there
-    def write_to_db(self, filePath, time, modType, serverID):
         conn = sqlite3.connect(database)
         with conn:
             c = conn.cursor()
             sql_cmd = "insert into fileData values(?, ?, ?, ?)"
-            c.execute(sql_cmd, (filePath, serverID, time, modType))
+            c.execute(sql_cmd, (filePath, serverID, time, eventType))
             conn.commit()
-
-    def update_db(self, filePath, time, modType, serverID):
-        conn = sqlite3.connect(database)
-        with conn:
-            c = conn.cursor()
-            sql_cmd = ('''UPDATE fileData
-                        SET ''')
-            c.execute(sql_cmd, (filePath, serverID, time, modType))
-            conn.commit()
-
 
 if __name__ == "__main__":
     event_handler = EventHandler()
