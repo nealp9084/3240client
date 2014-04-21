@@ -8,6 +8,7 @@ import time
 import sqlite3
 import requests
 import json
+import allEvents
 
 from allEvents import SpecificEventHandler
 
@@ -17,6 +18,7 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 specific = SpecificEventHandler()
+
 
 class EventHandler(FileSystemEventHandler):
 
@@ -37,80 +39,54 @@ class EventHandler(FileSystemEventHandler):
 
         if eventType == "moved":
             path = SpecificEventHandler.on_moved1(specific, event)
-            self.upload_file(path, timeInfo,eventType)
+            SpecificEventHandler.on_create1(path, timeInfo,eventType)
 
         if eventType == "modified":
-            self.update_file(event.src_path, timeInfo, eventType)
+            SpecificEventHandler.on_modified1(event.src_path, timeInfo, eventType)
 
         if eventType == "deleted":
             SpecificEventHandler.on_deleted1(specific, event.src_path)
 
         if eventType == "created":
-            self.upload_file(event.src_path, timeInfo, eventType)
+            SpecificEventHandler.on_create1(event.src_path, timeInfo, eventType)
 
-    #
-    #     # if self.path_compare(event.src_path) is True:
-    #     #     self.update_file(event.src_path, timeInfo, eventType)
-    #     # else:
-    #     #     self.upload_file(event.src_path, timeInfo, eventType)
-    #
-    #
-    #
-    # def path_compare(self, path_now):
-    #     conn = sqlite3.connect(database)
-    #     with conn:
-    #         c = conn.cursor()
-    #         c.execute('''SELECT file_path AND server_id
-    #                         FROM fileData
-    #                         WHERE file_path = ?''', (path_now,))
-    #         results = c.fetchall()
-    #         if results:
-    #             return True
-    #         else:
-    #             return False
+   def sync_now(self):
+       #do syncing stuff now
+       #need to get server copy of database
+       #compare their copy of database to ours
+       #if database doesnt match then update theirs
 
 
 
-    def update_file(self, filePath, time, eventType):
-        print "updating file"
-        conn = sqlite3.connect(database)
-        #serverId = -1
-        #print serverId
+@staticmethod
+def command_line():
 
-        with conn:
-            c = conn.cursor()
-            #c.execute('''update fileData set server_id =(?) where file_path = (?)''', (serverId, filePath))
-            c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
-            serverId = int(c.fetchall()[0][0])
-            conn.commit()
-        print serverId
+    sync = allEvents.syncing
 
-        #by this point will have server id
-        with open(filePath, 'r') as f:
-            file_cont = f.read()
-        params = {'current_user':1, "last_modified": time, 'file_data': file_cont}
-        r = requests.post("http://127.0.0.1:8000/sync/%d/update_file/" %serverId, data = params)
+    while True:
+        print 'Enter a number to perform the corresponding task'
+        if (sync == 1):
+            print '1: Turn automatic sync off'
+        else:
+            print '1: Turn automatic sync on'
+        print '2: Change password'
 
-        with open("file.html", 'w') as f:
-            f.write(r.text)
+        num = int(raw_input())
 
+        if num == 1:
+            if sync == 1:
+                allEvents.syncing = 0
+            else:
+                allEvents.syncing = 1
+                #sync with server now
+        else:
+            print "Invalid Entry. Enter '1' or '2'"
 
-    def upload_file(self, filePath, time, eventType):
-        #read file
-        with open(filePath, 'r') as f:
-            file_cont = f.read()
-        params = {'current_user':1, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
-        r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
-        print r.text
-        serverID = json.loads(r.text)["file_id"]
-        conn = sqlite3.connect(database)
-        with conn:
-            c = conn.cursor()
-            sql_cmd = "insert into fileData values(?, ?, ?, ?)"
-            c.execute(sql_cmd, (filePath, serverID, time, eventType))
-            conn.commit()
+        print
 
 if __name__ == "__main__":
+    command_line()
+
     event_handler = EventHandler()
 
     path = sys.argv[1] if len(sys.argv) > 1 else '.'
