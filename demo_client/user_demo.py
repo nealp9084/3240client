@@ -2,9 +2,37 @@ import requests
 import json
 from datetime import datetime
 
-SERVER = '127.0.0.1:8000' # 172.27.123.220
+SERVER = 'localhost:8000'
+
+TOKEN = None
 
 
+def get_token():
+  global TOKEN
+
+  while not TOKEN:
+    username = raw_input('Enter your username: ')
+    password = raw_input('Enter your password: ')
+
+    post_data = {'name': username, 'password': password}
+    r = requests.post('http://' + SERVER + '/tokens/login/', data=post_data)
+
+    if r.status_code == 200:
+      json_data = r.json()
+      if json_data['success']:
+        print 'Login successful!'
+        TOKEN = json_data['token']
+        return TOKEN
+      else:
+        print 'Login was not successful!'
+    else:
+      print 'Uh oh, status code was not 200!'
+
+      with open('debug_gettoken.html', 'w') as f:
+        f.write(r.text)
+
+
+# TODO: this will only work for admins. code should address that.
 def list_users():
   r = requests.get('http://' + SERVER + '/users/')
   users = r.json()
@@ -15,6 +43,7 @@ def list_users():
     print json.dumps(user)
 
 
+# TODO: this will only work for the current user, and for admins. code should address that.
 def show_user_details():
   user_id = int(raw_input('Enter a user id: '))
   api_endpoint = 'http://' + SERVER + '/users/%d/' % user_id
@@ -25,6 +54,12 @@ def show_user_details():
   else:
     print 'Could not get user details'
 
+    with open('debug_userdetails.html', 'w') as f:
+        f.write(r.text)
+
+
+# TODO: add a stub for the /me/ endpoint
+
 
 def create_user():
   username = raw_input('Enter a username: ')
@@ -33,6 +68,10 @@ def create_user():
   post_data = {'name': username, 'password': password}
 
   r = requests.post('http://' + SERVER + '/users/create/', data=post_data)
+
+  with open('debug_createuser.html', 'w') as f:
+    f.write(r.text)
+
   json_response = r.json()
 
   if json_response['success']:
@@ -43,20 +82,28 @@ def create_user():
 
 
 def delete_user():
+  token = get_token()
   user_id = int(raw_input('Enter a user id: '))
-  api_endpoint = 'http://' + SERVER + '/users/%d/delete/' % user_id
+  api_endpoint = 'http://' + SERVER + '/users/%d/delete/?token=%s' % (user_id, token)
   r = requests.delete(api_endpoint)
 
   if r.status_code == 200:
     print 'Successfully deleted the user'
   else:
     print 'Could not delete the user'
+    with open('debug_deleteuser.html', 'w') as f:
+      f.write(r.text)
 
 
 def upload_file():
-  with open('some_file.txt') as f:
-    params = {'current_user': 1, 'local_path': '/var/junk',
-              'last_modified': '2014-03-24 18:14:11+00:00', 'file_data': f.read()}
+  FILENAME = 'some_file.txt'
+  token = get_token()
+
+  with open(FILENAME) as f:
+    params = {'local_path': '/var/junk/%s' % FILENAME,
+              'last_modified': '2014-03-24 18:14:11+00:00',
+              'file_data': f.read(),
+              'token': token}
 
     r = requests.post('http://' + SERVER + '/sync/create_server_file/', data=params)
 
@@ -70,32 +117,36 @@ def upload_file():
     else:
       print 'Failed to upload the file! Server responded with %d.' % r.status_code
 
-    html = r.text
     with open('debug_uploadfile.html', 'w') as f:
-      f.write(html)
+      f.write(r.text)
+
 
 def get_file():
   # read the file with file id 1
-  file_id = 1
-  api_endpoint = 'http://' + SERVER + '/sync/%d/serve_file/?current_user=1' % file_id
+  FILE_ID = 1
+  token = get_token()
+
+  api_endpoint = 'http://' + SERVER + '/sync/%d/serve_file/?token=%s' % (FILE_ID, token)
   r = requests.get(api_endpoint)
   print 'Downloaded the file'
-  html = r.text
+
   with open('debug_getfile.html','w') as f:
-    f.write(html)
+    f.write(r.text)
 
 
 def update_file():
   # update the file with file id 1
-  file_id = 1
-  api_endpoint = 'http://' + SERVER + '/sync/%d/update_file/' % file_id
+  FILE_ID = 1
+  token = get_token()
+
+  api_endpoint = 'http://' + SERVER + '/sync/%d/update_file/' % FILE_ID
 
   with open('another_file.txt') as f:
     filedata = f.read()
 
-  params = {'current_user': 1,
-            'last_modified': str(datetime.now()),
-            'file_data': filedata}
+  params = {'last_modified': str(datetime.now()),
+            'file_data': filedata,
+            'token': token}
   r = requests.post(api_endpoint, data=params)
 
   if r.status_code == 200:
@@ -108,18 +159,20 @@ def update_file():
   else:
     print 'Failed to update the file! Server responded with %d.' % r.status_code
 
-  html = r.text
   with open('debug_updatefile.html', 'w') as f2:
-    f2.write(html)
+    f2.write(r.text)
 
 
 def delete_file():
-  file_id = 1
-  api_endpoint = 'http://' + SERVER + '/sync/%d/delete_file/?current_user=1' % file_id
+  # delete the file with file id 1
+  FILE_ID = 1
+  token = get_token()
+
+  api_endpoint = 'http://' + SERVER + '/sync/%d/delete_file/?token=%s' % (FILE_ID, token)
   r = requests.delete(api_endpoint)
-  html = r.text
+
   with open('debug_deletefile.html','w') as f:
-    f.write(html)
+    f.write(r.text)
 
 
 def start_cli():
