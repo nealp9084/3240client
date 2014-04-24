@@ -4,13 +4,10 @@ from datetime import datetime
 
 SERVER = 'localhost:8000'
 
-TOKEN = None
-
-
 def get_token():
-  global TOKEN
+  token = None
 
-  while not TOKEN:
+  while not token:
     username = raw_input('Enter your username: ')
     password = raw_input('Enter your password: ')
 
@@ -21,8 +18,8 @@ def get_token():
       json_data = r.json()
       if json_data['success']:
         print 'Login successful!'
-        TOKEN = json_data['token']
-        return TOKEN
+        token = json_data['token']
+        return token
       else:
         print 'Login was not successful!'
     else:
@@ -58,7 +55,17 @@ def show_user_details():
         f.write(r.text)
 
 
-# TODO: add a stub for the /me/ endpoint
+def show_me():
+  token = get_token()
+
+  r = requests.get('http://' + SERVER + '/users/me/?token=%s' % token)
+
+  if r.status_code == 200:
+    print r.text
+  else:
+    print "Failed to show current user's info!"
+    with open('debug_showme.html', 'w') as f:
+      f.write(r.text)
 
 
 def create_user():
