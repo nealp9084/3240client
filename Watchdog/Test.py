@@ -9,6 +9,7 @@ import sqlite3
 import requests
 import json
 import allEvents
+import dateutil.parser
 
 from allEvents import SpecificEventHandler
 
@@ -18,6 +19,8 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 specific = SpecificEventHandler()
+SERVER = 'localhost:8000'
+TOKEN = None
 
 
 class EventHandler(FileSystemEventHandler):
@@ -50,7 +53,101 @@ class EventHandler(FileSystemEventHandler):
         if eventType == "created":
             SpecificEventHandler.on_create1(event.src_path, timeInfo, eventType)
 
-   def sync_now(self):
+
+    @staticmethod
+    def get_token():
+      token = None
+
+      while not token:
+        username = raw_input('Enter your username: ')
+        password = raw_input('Enter your password: ')
+
+        post_data = {'name': username, 'password': password}
+        r = requests.post('http://' + SERVER + '/tokens/login/', data=post_data)
+
+        if r.status_code == 200:
+          json_data = r.json()
+          if json_data['success']:
+            print 'Login successful!'
+            token = json_data['token']
+            return token
+          else:
+            print 'Login was not successful!'
+        else:
+          print 'Uh oh, status code was not 200!'
+
+          with open('debug_gettoken.html', 'w') as f:
+            f.write(r.text)
+
+
+    @staticmethod
+    def sync_now():
+       r = requests.get("http://localhost:8000/sync/?token=%s" %TOKEN)
+       fileList = r.json()
+       for item in fileList:
+           print item
+           file_name = item["local_path"]
+           timeS= item["last_modified"]
+           tstamp = dateutil.parser.parse(timeS).replace(tzinfo = None)
+           sId = item["id"]
+           mod_type = "modified"
+
+
+           conn = sqlite3.connect(database)
+           with conn:
+            c = conn.cursor()
+
+            c.execute('''select file_path, date_stamp from fileData where file_path = ?''', (file_name,))
+            query = c.fetchall()
+            conn.commit()
+            print query
+            if not query:
+                download = requests.get("http://localhost:8000/sync/%d/serve_file?token=%s" %(sId, TOKEN))
+                fileCont = download.text
+                with open (file_name, 'w') as f:
+                    f.write(fileCont)
+
+                conn = sqlite3.connect(database)
+                with conn:
+                    c = conn.cursor()
+                    sql_cmd = "insert into fileData values(?, ?, ?, ?)"
+                    c.execute(sql_cmd, (file_name, sId, timeS, mod_type))
+                    conn.commit()
+            else:
+                conn = sqlite3.connect(database)
+                with conn:
+                    c = conn.cursor()
+                    sql_cmd = "select date_stamp from fileData where file_path = ?"
+                    c.execute(sql_cmd, (file_name,))
+                    ts = c.fetchall()[0][0]
+                    print ts
+                    lastMod = dateutil.parser.parse(ts).replace(tzinfo = None)
+                    print lastMod
+                    conn.commit()
+                    if tstamp == lastMod:
+                        1
+
+                    elif tstamp > lastMod:
+                        download = requests.get("http://localhost:8000/sync/%d/serve_file?token=%s" %(sId,TOKEN))
+                        fileCont = download.text
+                        with open (file_name, 'w') as f:
+                            f.write(fileCont)
+
+                        conn = sqlite3.connect(database)
+                        with conn:
+                            c = conn.cursor()
+                            sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
+                            c.execute(sql_cmd, (timeS, mod_type, file_name))
+                            conn.commit()
+
+                    elif lastMod > tstamp:
+                         with open(file_name, 'r') as f:
+                            file_cont = f.read()
+                         params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
+                         upL = requests.post("http://localhost:8000/sync/%d/update_file/" %sId, data = params)
+                         code = upL.status_code
+                         print code
+
        #do syncing stuff now
        #need to get server copy of database
        #compare their copy of database to ours
@@ -58,34 +155,37 @@ class EventHandler(FileSystemEventHandler):
 
 
 
-@staticmethod
-def command_line():
+    @staticmethod
+    def command_line():
 
-    sync = allEvents.syncing
+        sync = allEvents.syncing
 
-    while True:
-        print 'Enter a number to perform the corresponding task'
-        if (sync == 1):
-            print '1: Turn automatic sync off'
-        else:
-            print '1: Turn automatic sync on'
-        print '2: Change password'
-
-        num = int(raw_input())
-
-        if num == 1:
-            if sync == 1:
-                allEvents.syncing = 0
+        while True:
+            print 'Enter a number to perform the corresponding task'
+            if (sync == 1):
+                print '1: Turn automatic sync off'
             else:
-                allEvents.syncing = 1
-                #sync with server now
-        else:
-            print "Invalid Entry. Enter '1' or '2'"
+                print '1: Turn automatic sync on'
 
-        print
+            num = int(raw_input())
+
+            if num == 1:
+                if sync == 1:
+                    allEvents.syncing = 0
+                    sync = 0
+                else:
+                    allEvents.syncing = 1
+                    sync = 1
+                    EventHandler.sync_now()
+            else:
+                print "Invalid Entry. Enter '1'"
+
+            print
 
 if __name__ == "__main__":
-    command_line()
+    TOKEN = EventHandler.get_token()
+    #
+    # EventHandler.command_line()
 
     event_handler = EventHandler()
 

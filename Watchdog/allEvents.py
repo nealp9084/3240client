@@ -10,11 +10,14 @@ import logging
 import requests
 import sqlite3
 import json
+
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 syncing = 1
+
 
 #handle separate events in here
 
@@ -46,7 +49,8 @@ class SpecificEventHandler(FileSystemEventHandler):
         print serverId
         #read file
         if (syncing == 1):
-            r = requests.delete("http://127.0.0.1:8000/sync/" +  str(serverId) + "/delete_file/?current_user=1")
+            import Test
+            r = requests.delete("http://127.0.0.1:8000/sync/" +  str(serverId) + "/delete_file/?token=%s" %Test.TOKEN)
             print r.text
         with conn:
             c = conn.cursor()
@@ -72,7 +76,8 @@ class SpecificEventHandler(FileSystemEventHandler):
         if (syncing == 1):
             with open(filePath, 'r') as f:
                 file_cont = f.read()
-            params = {'current_user':1, "last_modified": time, 'file_data': file_cont}
+            import Test
+            params = {'token':Test.TOKEN, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://127.0.0.1:8000/sync/%d/update_file/" %serverId, data = params)
 
             with open("file.html", 'w') as f:
@@ -85,7 +90,8 @@ class SpecificEventHandler(FileSystemEventHandler):
         if (syncing == 1):
             with open(filePath, 'r') as f:
                 file_cont = f.read()
-            params = {'current_user':1, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
+            import Test
+            params = {'token':Test.TOKEN, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
             print r.text
             serverID = json.loads(r.text)["file_id"]
