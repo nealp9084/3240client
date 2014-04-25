@@ -8,8 +8,10 @@ import time
 import sqlite3
 import requests
 import json
-import allEvents
+#import allEvents
 import dateutil.parser
+
+import getTokens
 
 from allEvents import SpecificEventHandler
 
@@ -20,7 +22,7 @@ from watchdog.events import FileSystemEventHandler
 database = 'fileData.db'
 specific = SpecificEventHandler()
 SERVER = 'localhost:8000'
-TOKEN = None
+#TOKEN = None
 
 
 class EventHandler(FileSystemEventHandler):
@@ -28,7 +30,7 @@ class EventHandler(FileSystemEventHandler):
 
 
     def on_any_event(self, event):
-
+        print event
         if event.is_directory:
             return
 
@@ -41,45 +43,21 @@ class EventHandler(FileSystemEventHandler):
         timeInfo = str(datetime.datetime.now())
 
         if eventType == "moved":
-            path = SpecificEventHandler.on_moved1(specific, event)
-            SpecificEventHandler.on_create1(path, timeInfo,eventType)
+            path = specific.on_moved1(event)
+            specific.on_create1(path, timeInfo,eventType)
 
         if eventType == "modified":
-            SpecificEventHandler.on_modified1(event.src_path, timeInfo, eventType)
+            #SpecificEventHandler.on_modified1(event.src_path, timeInfo, eventType)
+            specific.on_modified1(event.src_path, timeInfo, eventType)
 
         if eventType == "deleted":
-            SpecificEventHandler.on_deleted1(specific, event.src_path)
+            specific.on_deleted1(event.src_path)
 
         if eventType == "created":
-            SpecificEventHandler.on_create1(event.src_path, timeInfo, eventType)
+            #SpecificEventHandler.on_create1(event.src_path, timeInfo, eventType)
+            specific.on_create1(event.src_path, timeInfo, eventType)
 
-
-    @staticmethod
-    def get_token():
-      token = None
-
-      while not token:
-        username = raw_input('Enter your username: ')
-        password = raw_input('Enter your password: ')
-
-        post_data = {'name': username, 'password': password}
-        r = requests.post('http://' + SERVER + '/tokens/login/', data=post_data)
-
-        if r.status_code == 200:
-          json_data = r.json()
-          if json_data['success']:
-            print 'Login successful!'
-            token = json_data['token']
-            return token
-          else:
-            print 'Login was not successful!'
-        else:
-          print 'Uh oh, status code was not 200!'
-
-          with open('debug_gettoken.html', 'w') as f:
-            f.write(r.text)
-
-
+    
     @staticmethod
     def sync_now():
        r = requests.get("http://localhost:8000/sync/?token=%s" %TOKEN)
@@ -183,8 +161,11 @@ class EventHandler(FileSystemEventHandler):
             print
 
 if __name__ == "__main__":
-    TOKEN = EventHandler.get_token()
-    #
+    #global TOKEN 
+
+    #EventHandler.get_token()
+    TOKEN = getTokens.get_token()
+    print "just got token" + TOKEN
     # EventHandler.command_line()
 
     event_handler = EventHandler()
