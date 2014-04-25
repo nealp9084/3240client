@@ -103,10 +103,11 @@ def delete_user():
 
 
 def upload_file():
-  FILENAME = 'some_file.txt'
+#  FILENAME = 'some_file.txt'
+  FILENAME = 'D3_00.png'
   token = get_token()
 
-  with open(FILENAME) as f:
+  with open(FILENAME,'rb') as f:
     params = {'local_path': '/var/junk/%s' % FILENAME,
               'last_modified': '2014-03-24 18:14:11+00:00',
               'file_data': f.read(),
@@ -124,8 +125,8 @@ def upload_file():
     else:
       print 'Failed to upload the file! Server responded with %d.' % r.status_code
 
-    with open('debug_uploadfile.html', 'w') as f:
-      f.write(r.text)
+    with open('debug_uploadfile.html', 'wb') as f:
+      f.write(r.content)
 
 
 def get_file():
@@ -138,7 +139,7 @@ def get_file():
   print 'Downloaded the file'
 
   with open('debug_getfile.html','w') as f:
-    f.write(r.text)
+    f.write(r.content)
 
 
 def update_file():
