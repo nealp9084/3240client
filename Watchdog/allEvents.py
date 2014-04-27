@@ -1,6 +1,5 @@
 __author__ = 'morganPietruszka, meganBishop'
 
-
 import os
 import datetime
 import sys
@@ -11,6 +10,8 @@ import sqlite3
 import json
 #import Test
 
+from gi.repository import Notify
+
 from getTokens import get_token
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -18,6 +19,7 @@ from watchdog.events import FileSystemEventHandler
 database = 'fileData.db'
 syncing = 1
 SERVER = "127.0.0.1:8000"
+Notify.init ("Watchdog")
 
 #handle separate events in here
 
@@ -52,10 +54,10 @@ class SpecificEventHandler(FileSystemEventHandler):
         if (syncing == 1):
             #import Test
             r = requests.delete("http://" + SERVER + "/sync/" +  str(serverId) + "/delete_file/?token=%s" %token)
-            if r.json['success']:
-              messsage=Notify.Notification.new("File deleted",filePath,"dialog-information")
+            if r.json()['success']:
+              message=Notify.Notification.new("File deleted",filePath,"dialog-information")
             else:
-              message=Notify.Noficiation.new("FAILURE","Could not delete file on server.","dialog-information")            
+              message=Notify.Notification.new("FAILURE","Could not delete file on server.","dialog-information")            
             message.show()
 
             #print r.text
@@ -83,10 +85,10 @@ class SpecificEventHandler(FileSystemEventHandler):
                 file_cont = f.read()
             params = {'token': token, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://" + SERVER + "/sync/%d/update_file/" %serverId, data = params)
-            if r.json['success']:
+            if r.json()['success']:
               message=Notify.Notification.new("File modified",filePath,"dialog-information")
             else:
-              message=Notify.Noficiation.new("FAILURE","Could not modify file on server.","dialog-information")            
+              message=Notify.Notification.new("FAILURE","Could not modify file on server.","dialog-information")            
             message.show()
 
             with open("file.html", 'w') as f:
@@ -104,12 +106,12 @@ class SpecificEventHandler(FileSystemEventHandler):
                 file_cont = f.read()
             #import Test
             params = {'token':token, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
-            r = requests.post("http://" + "/sync/create_server_file/", data = params)
+            r = requests.post("http://" + SERVER + "/sync/create_server_file/", data = params)
             #print r.status_code
-            if r.json['success']:
+            if r.json()['success']:
               message=Notify.Notification.new("File created",filePath,"dialog-information")
             else:
-              message=Notify.Noficiation.new("FAILURE","Could not create file on server.","dialog-information")              
+              message=Notify.Notification.new("FAILURE","Could not create file on server.","dialog-information")              
             message.show()
 
             with open("create.html", 'w') as f:
