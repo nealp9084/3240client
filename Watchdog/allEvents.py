@@ -42,7 +42,7 @@ class SpecificEventHandler(FileSystemEventHandler):
 
 
     def on_deleted1(self, filePath):
-        print "on_deleted1"
+        #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
         with conn:
@@ -58,8 +58,8 @@ class SpecificEventHandler(FileSystemEventHandler):
             print r.text
         with conn:
             c = conn.cursor()
-            sql_cmd = "DELETE FROM fileData WHERE file_path = ? and server_id = ? "
-            c.execute(sql_cmd, (filePath, serverId))
+            sql_cmd = "update fileData set date stamp = ?, modification type = ? where file_path = ?"
+            c.execute(sql_cmd, (time, 'deleted', filePath))
             conn.commit()
 
     def on_modified1(self, filePath, time, eventType):
@@ -71,6 +71,10 @@ class SpecificEventHandler(FileSystemEventHandler):
             c = conn.cursor()
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
             serverId = int(c.fetchall()[0][0])
+
+            sql_cmd = "update fileData set date stamp = ?, modification type = ? where file_path = ?"
+            c.execute(sql_cmd, (time, eventType, filePath))
+
             conn.commit()
         print serverId
 
@@ -78,7 +82,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         if (syncing == 1):
             with open(filePath, 'r') as f:
                 file_cont = f.read()
-            import Test
+            #import Test
             params = {'token': token, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://127.0.0.1:8000/sync/%d/update_file/" %serverId, data = params)
 

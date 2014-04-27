@@ -109,8 +109,8 @@ class EventHandler(FileSystemEventHandler):
                     elif tstamp > lastMod:
                         download = requests.get("http://localhost:8000/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
-                        with open (file_name, 'w') as f:
-                            f.write(fileCont)
+                        with open (file_name, 'wb') as f:
+                            f.write(fileCont.encode('utf-8'))
 
                         conn = sqlite3.connect(database)
                         with conn:
@@ -126,7 +126,37 @@ class EventHandler(FileSystemEventHandler):
                          upL = requests.post("http://localhost:8000/sync/%d/update_file/" %sId, data = params)
                          code = upL.status_code
                          print code
+            #dump fileData
+              
+            conn = sqlite3.connect(database)
+            with conn:
+                c = conn.cursor()
 
+                c.execute("select * from fileData")
+                query = c.fetchall()
+                conn.commit()
+                #print query
+                sql_cmd = ("select * from fileData where server_id = ?")
+                c.execute(sql_cmd, ("-1",))
+                query1 = c.fetchall()
+          
+                print "THIS IS WHERE -1"
+                print query1
+                for item in query1:
+                    (filePath, serverID, timeStamp, modType) = item
+                    with open(filePath, 'r') as f:
+                        file_cont = f.read()
+                    params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
+                    r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
+                    print r.text
+                    serverID = json.loads(r.text)["file_id"]
+                    c = conn.cursor()
+                    sql_cmd =( "update fileData set server_id = ? where file_path = ?")
+                    c.execute(sql_cmd, (serverID, filePath))
+                    conn.commit()
+                    print "finished"
+
+#loop through our db, find files with deleted events
        #do syncing stuff now
        #need to get server copy of database
        #compare their copy of database to ours
@@ -205,7 +235,7 @@ if __name__ == "__main__":
     #EventHandler.get_token()
     TOKEN = getTokens.get_token()
     print "just got token" + TOKEN
-
+    EventHandler.sync_now()
 
 
     # EventHandler.command_line()
