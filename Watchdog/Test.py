@@ -132,10 +132,10 @@ class EventHandler(FileSystemEventHandler):
             with conn:
                 c = conn.cursor()
 
-                c.execute("select * from fileData")
+                '''c.execute("select * from fileData")
                 query = c.fetchall()
                 conn.commit()
-                #print query
+                #print query'''
                 sql_cmd = ("select * from fileData where server_id = ?")
                 c.execute(sql_cmd, ("-1",))
                 query1 = c.fetchall()
