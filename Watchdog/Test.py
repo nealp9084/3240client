@@ -8,8 +8,9 @@ import time
 import sqlite3
 import requests
 import json
-#import allEvents
+import allEvents
 import dateutil.parser
+import thread
 
 import getTokens
 
@@ -160,16 +161,11 @@ class EventHandler(FileSystemEventHandler):
 
             print
 
-if __name__ == "__main__":
-    #global TOKEN 
+def start_commandLine(a, b):
+    EventHandler.command_line()
 
-    #EventHandler.get_token()
-    TOKEN = getTokens.get_token()
-    print "just got token" + TOKEN
-    # EventHandler.command_line()
-
+def start_eventHandler(a, b):
     event_handler = EventHandler()
-
     path = sys.argv[1] if len(sys.argv) > 1 else '.'
 
     if not os.path.exists(os.path.join(path, 'oneDir')):
@@ -191,8 +187,7 @@ if __name__ == "__main__":
             );''')
         # Save (commit) the changes'
         conn.commit()
-
-    handler = LoggingEventHandler()
+    #handler = LoggingEventHandler()
     observer = Observer()
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
@@ -202,6 +197,31 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
+
+
+if __name__ == "__main__":
+    #global TOKEN 
+
+    #EventHandler.get_token()
+    TOKEN = getTokens.get_token()
+    print "just got token" + TOKEN
+
+
+
+    # EventHandler.command_line()
+
+    event_handler = EventHandler()
+    thread.start_new_thread(start_eventHandler, (None, None))
+    print "2nd thread"
+
+    #thread.start_new_thread(start_commandLine, (None, None))
+    print "AYO out of sync"
+
+    start_commandLine(None, None)
+
+
+
+
 
 
 
