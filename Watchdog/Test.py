@@ -183,6 +183,13 @@ class EventHandler(FileSystemEventHandler):
             else:
                 print "Invalid Entry. Enter '1'"
 
+def sync_run(a, b):
+    while True:
+       # print "sync value "+ str(allEvents.syncing)
+        time.sleep(20)
+        if allEvents.syncing == 1:
+            EventHandler.sync_now()
+
 def start_commandLine(a, b):
     EventHandler.command_line()
 
@@ -237,5 +244,7 @@ if __name__ == "__main__":
 
     #thread.start_new_thread(start_commandLine, (None, None))
     #print "AYO out of sync"
+
+    thread.start_new_thread(sync_run, (None, None))
 
     start_commandLine(None, None)
