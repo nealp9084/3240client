@@ -74,6 +74,7 @@ class EventHandler(FileSystemEventHandler):
             if not query:
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
                 fileCont = download.content
+                os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
                 with open('oneDir/'+file_name, 'wb') as f:
                     f.write(fileCont)
 
@@ -99,6 +100,8 @@ class EventHandler(FileSystemEventHandler):
                     elif tstamp > lastMod:
                         download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
+                        os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
+
                         with open ('oneDir/'+file_name, 'wb') as f:
                             f.write(fileCont.encode('utf-8'))
 
@@ -207,8 +210,6 @@ def start_eventHandler(a, b):
 
     if not os.path.exists(os.path.join(path, 'oneDir')):
         path = os.path.join(path, 'oneDir')
-        os.mkdir(path)
-
     else:
         path = path+'/oneDir'
 
@@ -239,6 +240,12 @@ def start_eventHandler(a, b):
 if __name__ == "__main__":
     
     TOKEN = getTokens.get_token()
+    if not os.path.exists(os.path.join(path, 'oneDir')):
+        path = os.path.join(path, 'oneDir')
+        os.mkdir(path)
+    else:
+        path = path+'/oneDir'
+
     #print "just got token" + TOKEN
     EventHandler.sync_now()
 
