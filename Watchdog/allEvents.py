@@ -107,7 +107,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             else:
                 message=Notify.Notification.new("FAILURE","Could not modify file on server.","dialog-information")            
                 msg_disp = True
-            if msg_dsp:
+            if msg_disp:
                 message.show()
 
             with open("file.html", 'w') as f:
