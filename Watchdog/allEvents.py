@@ -1,5 +1,7 @@
 __author__ = 'morganPietruszka, meganBishop'
 
+
+
 import os
 import datetime
 import sys
@@ -16,31 +18,40 @@ from getTokens import get_token
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+
 database = 'fileData.db'
 syncing = 1
 SERVER = "127.0.0.1:8000"
 Notify.init ("Watchdog")
 
+
+
 #handle separate events in here
 
 class SpecificEventHandler(FileSystemEventHandler):
 
-    def on_moved1(self, event):
-        #print "moved"
-        #print event.src_path
-        #print event.dest_path
+
+    def on_moved1(self, time, event):
+        print "moved"
+        print event.src_path
+        print event.dest_path
 
         source = event.src_path
         dest = event.dest_path
 
         if "oneDir" not in dest:
-            self.on_deleted1(source)
-        else:
+            self.on_deleted1(source, time, 'deleted')
+        if source == None:
             source = dest
+            self.on_create1(source, time, event.event_type)
+        else:
+            self.on_deleted1(source, time, 'deleted')
+            source = dest
+            self.on_create1(source, time, event.event_type)
         return source
 
 
-    def on_deleted1(self, filePath):
+    def on_deleted1(self, filePath, time, eventType):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
@@ -49,7 +60,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
             serverId = int(c.fetchall()[0][0])
             conn.commit()
-        #print serverId
+        print serverId
         #read file
         if (syncing == 1):
             #import Test
@@ -61,28 +72,36 @@ class SpecificEventHandler(FileSystemEventHandler):
             message.show()
 
             #print r.text
+            import Test
+            r = requests.delete("http://127.0.0.1:8000/sync/" +  str(serverId) + "/delete_file/?token=%s" %token)
+            print r.text
         with conn:
             c = conn.cursor()
-            sql_cmd = "DELETE FROM fileData WHERE file_path = ? and server_id = ? "
-            c.execute(sql_cmd, (filePath, serverId))
+            sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
+            c.execute(sql_cmd, (time, eventType, filePath))
             conn.commit()
 
     def on_modified1(self, filePath, time, eventType):
         token =  get_token()
-        #print "updating file"
+        print "updating file"
         conn = sqlite3.connect(database)
 
         with conn:
             c = conn.cursor()
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
             serverId = int(c.fetchall()[0][0])
+
+            sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
+            c.execute(sql_cmd, (time, eventType, filePath))
+
             conn.commit()
-        #print serverId
+        print serverId
 
         #by this point will have server id
         if (syncing == 1):
             with open(filePath, 'r') as f:
                 file_cont = f.read()
+            #import Test
             params = {'token': token, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://" + SERVER + "/sync/%d/update_file/" %serverId, data = params)
             if r.json()['success']:
@@ -124,3 +143,8 @@ class SpecificEventHandler(FileSystemEventHandler):
             sql_cmd = "insert into fileData values(?, ?, ?, ?)"
             c.execute(sql_cmd, (filePath, serverID, time, eventType))
             conn.commit()
+
+
+
+
+
