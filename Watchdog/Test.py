@@ -159,7 +159,14 @@ class EventHandler(FileSystemEventHandler):
                 for item in query:
                      (filePath, serverID, timeStamp, modType) = item
                      if not filePath in map(lambda x: x['local_path'], fileList) and not modType == 'deleted':
-                         os.remove('oneDir/'+filePath)
+                         try:
+                             os.remove('oneDir/'+filePath)
+                         except:
+                             None
+                         wand = conn.cursor()
+                         avada_kedavra = ("delete from fileData where file_path = ?")
+                         wand.execute(avada_kedavra, (filePath,))
+                         conn.commit()
 
     @staticmethod
     def command_line():
