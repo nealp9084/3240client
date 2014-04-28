@@ -229,9 +229,7 @@ def start_eventHandler(a, b):
 
 
 if __name__ == "__main__":
-    #global TOKEN 
-
-    #EventHandler.get_token()
+    
     TOKEN = getTokens.get_token()
     #print "just got token" + TOKEN
     EventHandler.sync_now()

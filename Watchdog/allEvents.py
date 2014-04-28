@@ -1,7 +1,5 @@
 __author__ = 'morganPietruszka, meganBishop'
 
-
-
 import os
 import datetime
 import sys
