@@ -46,7 +46,6 @@ class SpecificEventHandler(FileSystemEventHandler):
         return source
 
     def on_deleted1(self, filePath, time, eventType):
-        #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
 
@@ -60,10 +59,8 @@ class SpecificEventHandler(FileSystemEventHandler):
                 return
             serverId = int(query[0][0])
             conn.commit()
-        #print serverId
-        #read file
-        if (syncing == 1):
-            #import Test
+
+        if (syncing == 1 and not serverId == -1):
             r = requests.delete("http://" + SERVER + "/sync/" +  str(serverId) + "/delete_file/?token=%s" %token)
             if r.json()['success']:
               message=Notify.Notification.new("File deleted",filePath,"dialog-information")
