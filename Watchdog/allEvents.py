@@ -54,7 +54,10 @@ class SpecificEventHandler(FileSystemEventHandler):
         with conn:
             c = conn.cursor()
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
-            serverId = int(c.fetchall()[0][0])
+            query = c.fetchall()
+            if not query:
+                return
+            serverId = int(query[0][0])
             conn.commit()
         #print serverId
         #read file
