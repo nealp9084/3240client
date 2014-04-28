@@ -27,7 +27,7 @@ SERVER = '172.27.123.207:8000'
 class EventHandler(FileSystemEventHandler):
 
     def on_any_event(self, event):
-        print event
+        #print event
         if event.is_directory:
             return
 
@@ -55,7 +55,7 @@ class EventHandler(FileSystemEventHandler):
        r = requests.get("http://"+SERVER+"/sync/?token=%s" %TOKEN)
        fileList = r.json()
        for item in fileList:
-           print item
+           #print item
            file_name = item["local_path"]
            timeS= item["last_modified"]
            tstamp = dateutil.parser.parse(timeS).replace(tzinfo = None)
@@ -69,7 +69,7 @@ class EventHandler(FileSystemEventHandler):
             c.execute('''select file_path, date_stamp, modification_type from fileData where file_path = ?''', (file_name,))
             query = c.fetchall()
             conn.commit()
-            print query
+            #print query
             if not query:
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
                 fileCont = download.content
@@ -89,9 +89,9 @@ class EventHandler(FileSystemEventHandler):
                     sql_cmd = "select date_stamp from fileData where file_path = ?"
                     c.execute(sql_cmd, (file_name,))
                     ts = c.fetchall()[0][0]
-                    print ts
+                    #print ts
                     lastMod = dateutil.parser.parse(ts).replace(tzinfo = None)
-                    print lastMod
+                    #print lastMod
                     conn.commit()
                     if tstamp == lastMod:
                         1
@@ -120,7 +120,7 @@ class EventHandler(FileSystemEventHandler):
                              params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
                              upL = requests.post("http://"+SERVER+"/sync/%d/update_file/" %sId, data = params)
                              code = upL.status_code
-                             print code
+                             #print code
             #dump fileData
               
             conn = sqlite3.connect(database)
@@ -131,21 +131,21 @@ class EventHandler(FileSystemEventHandler):
                 c.execute(sql_cmd, ("-1",))
                 query = c.fetchall()
           
-                print "THIS IS WHERE -1"
-                print query
+                #print "THIS IS WHERE -1"
+                #print query
                 for item in query:
                     (filePath, serverID, timeStamp, modType) = item
                     with open('oneDir/'+filePath, 'r') as f:
                         file_cont = f.read()
                     params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
                     r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
-                    print r.text
+                    #print r.text
                     serverID = json.loads(r.text)["file_id"]
                     c = conn.cursor()
                     sql_cmd =( "update fileData set server_id = ? where file_path = ?")
                     c.execute(sql_cmd, (serverID, filePath))
                     conn.commit()
-                    print "finished"
+                    #print "finished"
 
             conn = sqlite3.connect(database)
             with conn:
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     #EventHandler.get_token()
     TOKEN = getTokens.get_token()
-    print "just got token" + TOKEN
+    #print "just got token" + TOKEN
     EventHandler.sync_now()
 
     # EventHandler.command_line()

@@ -28,9 +28,9 @@ Notify.init ("Watchdog")
 class SpecificEventHandler(FileSystemEventHandler):
 
     def on_moved1(self, time, event):
-        print "moved"
-        print event.src_path
-        print event.dest_path
+        #print "moved"
+        #print event.src_path
+        #print event.dest_path
 
         source = event.src_path
         dest = event.dest_path
@@ -57,7 +57,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
             serverId = int(c.fetchall()[0][0])
             conn.commit()
-        print serverId
+        #print serverId
         #read file
         if (syncing == 1):
             #import Test
@@ -75,7 +75,7 @@ class SpecificEventHandler(FileSystemEventHandler):
 
     def on_modified1(self, filePath, time, eventType):
         token =  get_token()
-        print "updating file"
+        #print "updating file"
         conn = sqlite3.connect(database)
         filePath = filePath.split('oneDir/')[1]
 
@@ -88,7 +88,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             c.execute(sql_cmd, (time, eventType, filePath))
 
             conn.commit()
-        print serverId
+        #print serverId
 
         #by this point will have server id
         if (syncing == 1):
