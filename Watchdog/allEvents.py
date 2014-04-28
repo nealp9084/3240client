@@ -18,13 +18,10 @@ from getTokens import get_token
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-
 database = 'fileData.db'
 syncing = 1
 SERVER = "172.27.123.207:8000"
 Notify.init ("Watchdog")
-
-
 
 #handle separate events in here
 
@@ -53,7 +50,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
-        filePath = './'+filePath.split('Watchdog/')[1]
+        filePath = './'+filePath.split('oneDir/')[1]
 
         with conn:
             c = conn.cursor()
@@ -80,7 +77,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         token =  get_token()
         print "updating file"
         conn = sqlite3.connect(database)
-        filePath = './'+filePath.split('Watchdog/')[1]
+        filePath = './'+filePath.split('oneDir/')[1]
 
         with conn:
             c = conn.cursor()
@@ -113,7 +110,7 @@ class SpecificEventHandler(FileSystemEventHandler):
     def on_create1(self, filePath, time, eventType):
         #print "on create"
         token =  get_token()
-        filePath = './'+filePath.split('Watchdog/')[1]
+        filePath = './'+filePath.split('oneDir/')[1]
 
         #read file
         serverID = -1
