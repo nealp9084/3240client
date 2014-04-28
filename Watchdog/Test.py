@@ -74,10 +74,11 @@ class EventHandler(FileSystemEventHandler):
             if not query:
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
                 fileCont = download.content
-                try:
-                    os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
-                except:
-                    None
+                if "/" in file_name:
+                    try:
+                        os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
+                    except:
+                        None
                 with open('oneDir/'+file_name, 'wb') as f:
                     f.write(fileCont)
 
@@ -99,14 +100,16 @@ class EventHandler(FileSystemEventHandler):
                     #print lastMod
                     conn.commit()
                     if tstamp == lastMod:
-                        1
+                        None
                     elif tstamp > lastMod:
                         download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
-                        try:
-                            os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
-                        except:
-                            None
+                        if "/" in file_name:
+                            try:
+                                os.makedirs('oneDir/' + file_name[0:file_name.rfind("/")])
+                            except:
+                                None
+
                         with open ('oneDir/'+file_name, 'wb') as f:
                             f.write(fileCont.encode('utf-8'))
 
