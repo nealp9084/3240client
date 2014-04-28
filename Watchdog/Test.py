@@ -22,7 +22,8 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 specific = SpecificEventHandler()
-SERVER = '172.27.123.207:8000'
+with open('IP.txt','r') as f:
+    SERVER = f.read().strip()
 
 class EventHandler(FileSystemEventHandler):
 

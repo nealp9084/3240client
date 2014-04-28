@@ -18,7 +18,8 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 syncing = 1
-SERVER = "172.27.123.207:8000"
+with open('IP.txt','r') as f:
+    SERVER = f.read().strip()
 Notify.init ("Watchdog")
 
 #handle separate events in here
