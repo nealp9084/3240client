@@ -135,58 +135,59 @@ class EventHandler(FileSystemEventHandler):
                              #print code
             #dump fileData
               
-            conn = sqlite3.connect(database)
-            with conn:
-                c = conn.cursor()
+       conn = sqlite3.connect(database)
+       with conn:
+           c = conn.cursor()
 
-                sql_cmd = ("select * from fileData where server_id = ?")
-                c.execute(sql_cmd, ("-1",))
-                query = c.fetchall()
+           sql_cmd = ("select * from fileData where server_id = ?")
+           c.execute(sql_cmd, ("-1",))
+           query = c.fetchall()
+           print '*** this is where -1!!!! ***'
           
-                for item in query:
-                    (filePath, serverID, timeStamp, modType) = item
-                    if os.path.isfile('oneDir/'+filepath):
-                        with open('oneDir/'+filePath, 'r') as f:
-                            file_cont = f.read()
+           for item in query:
+               (filePath, serverID, timeStamp, modType) = item
+               if os.path.isfile('oneDir/'+filepath):
+                   with open('oneDir/'+filePath, 'r') as f:
+                       file_cont = f.read()
 
-                        params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
-                        r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
-                        if r.json()['success']:
-                            serverID = json.loads(r.text)["file_id"]
-                            c = conn.cursor()
-                            sql_cmd =( "update fileData set server_id = ? where file_path = ?")
-                            c.execute(sql_cmd, (serverID, filePath))
-                            conn.commit()
-                        else:
-                            c = conn.cursor()
-                            sql_cmd =( "delete from fileData where file_path = ?")
-                            c.execute(sql_cmd, (filePath,))
-                            conn.commit()
-                    else:
-                        c = conn.cursor()
-                        sql_cmd =( "delete from fileData where file_path = ?")
-                        c.execute(sql_cmd, (filePath,))
-                        conn.commit()
+                   params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
+                   r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
+                   if r.json()['success']:
+                       serverID = json.loads(r.text)["file_id"]
+                       c = conn.cursor()
+                       sql_cmd =( "update fileData set server_id = ? where file_path = ?")
+                       c.execute(sql_cmd, (serverID, filePath))
+                       conn.commit()
+                   else:
+                       c = conn.cursor()
+                       sql_cmd =( "delete from fileData where file_path = ?")
+                       c.execute(sql_cmd, (filePath,))
+                       conn.commit()
+               else:
+                   c = conn.cursor()
+                   sql_cmd =( "delete from fileData where file_path = ?")
+                   c.execute(sql_cmd, (filePath,))
+                   conn.commit()
 
-            conn = sqlite3.connect(database)
-            with conn:
-                c = conn.cursor()
+       conn = sqlite3.connect(database)
+       with conn:
+           c = conn.cursor()
 
-                sql_cmd = ("select * from fileData")
-                c.execute(sql_cmd)
-                query = c.fetchall()
+           sql_cmd = ("select * from fileData")
+           c.execute(sql_cmd)
+           query = c.fetchall()
 
-                for item in query:
-                     (filePath, serverID, timeStamp, modType) = item
-                     if not filePath in map(lambda x: x['local_path'], fileList) and not modType == 'deleted':
-                         try:
-                             os.remove('oneDir/'+filePath)
-                         except:
-                             None
-                         wand = conn.cursor()
-                         avada_kedavra = ("delete from fileData where file_path = ?")
-                         wand.execute(avada_kedavra, (filePath,))
-                         conn.commit()
+           for item in query:
+                (filePath, serverID, timeStamp, modType) = item
+                if not filePath in map(lambda x: x['local_path'], fileList) and not modType == 'deleted':
+                    try:
+                        os.remove('oneDir/'+filePath)
+                    except:
+                        None
+                    wand = conn.cursor()
+                    avada_kedavra = ("delete from fileData where file_path = ?")
+                    wand.execute(avada_kedavra, (filePath,))
+                    conn.commit()
 
     @staticmethod
     def command_line():
