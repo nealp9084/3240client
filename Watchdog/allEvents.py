@@ -49,6 +49,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
+
         filePath = filePath.split('oneDir/')[1]
 
         with conn:
