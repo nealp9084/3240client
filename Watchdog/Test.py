@@ -240,6 +240,7 @@ def start_eventHandler(a, b):
 if __name__ == "__main__":
     
     TOKEN = getTokens.get_token()
+    path = sys.argv[1] if len(sys.argv) > 1 else '.'
     if not os.path.exists(os.path.join(path, 'oneDir')):
         path = os.path.join(path, 'oneDir')
         os.mkdir(path)
