@@ -158,7 +158,7 @@ class EventHandler(FileSystemEventHandler):
 
                 for item in query:
                      (filePath, serverID, timeStamp, modType) = item
-                     if not filePath in map(lambda x: x['local_path'], fileList):
+                     if not filePath in map(lambda x: x['local_path'], fileList) and not modType == 'deleted':
                          os.remove('oneDir/'+filePath)
 
     @staticmethod
