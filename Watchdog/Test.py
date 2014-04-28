@@ -36,23 +36,22 @@ class EventHandler(FileSystemEventHandler):
             return
 
 
-        print("event noticed: " + event.event_type +
-                 " on file " + event.src_path + " at " + str(datetime.datetime.now()))
+        #print("event noticed: " + event.event_type + " on file " + event.src_path + " at " + str(datetime.datetime.now()))
 
 
         eventType = event.event_type
         timeInfo = str(datetime.datetime.now())
 
         if eventType == "moved":
-            path = specific.on_moved1(event)
-            specific.on_create1(path, timeInfo,eventType)
+            path = specific.on_moved1(timeInfo, event)
+           # specific.on_create1(path, timeInfo,eventType)
 
         if eventType == "modified":
             #SpecificEventHandler.on_modified1(event.src_path, timeInfo, eventType)
             specific.on_modified1(event.src_path, timeInfo, eventType)
 
         if eventType == "deleted":
-            specific.on_deleted1(event.src_path)
+            specific.on_deleted1(event.src_path, timeInfo, eventType)
 
         if eventType == "created":
             #SpecificEventHandler.on_create1(event.src_path, timeInfo, eventType)
@@ -76,7 +75,7 @@ class EventHandler(FileSystemEventHandler):
            with conn:
             c = conn.cursor()
 
-            c.execute('''select file_path, date_stamp from fileData where file_path = ?''', (file_name,))
+            c.execute('''select file_path, date_stamp, modification_type from fileData where file_path = ?''', (file_name,))
             query = c.fetchall()
             conn.commit()
             print query
@@ -120,29 +119,32 @@ class EventHandler(FileSystemEventHandler):
                             conn.commit()
 
                     elif lastMod > tstamp:
-                         with open(file_name, 'r') as f:
-                            file_cont = f.read()
-                         params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
-                         upL = requests.post("http://localhost:8000/sync/%d/update_file/" %sId, data = params)
-                         code = upL.status_code
-                         print code
+                         path = query[0][0]
+                         time = query[0][1]
+                         mod = query[0][2]
+                         if mod == 'deleted':
+                             specific.on_deleted1(path, time, mod)
+                         else:
+                             with open(file_name, 'r') as f:
+                                 file_cont = f.read()
+                             params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
+                             upL = requests.post("http://localhost:8000/sync/%d/update_file/" %sId, data = params)
+                             code = upL.status_code
+                             print code
             #dump fileData
               
             conn = sqlite3.connect(database)
             with conn:
                 c = conn.cursor()
 
-                c.execute("select * from fileData")
-                query = c.fetchall()
-                conn.commit()
-                #print query
+              
                 sql_cmd = ("select * from fileData where server_id = ?")
                 c.execute(sql_cmd, ("-1",))
-                query1 = c.fetchall()
+                query = c.fetchall()
           
                 print "THIS IS WHERE -1"
-                print query1
-                for item in query1:
+                print query
+                for item in query:
                     (filePath, serverID, timeStamp, modType) = item
                     with open(filePath, 'r') as f:
                         file_cont = f.read()
@@ -155,6 +157,7 @@ class EventHandler(FileSystemEventHandler):
                     c.execute(sql_cmd, (serverID, filePath))
                     conn.commit()
                     print "finished"
+
 
 #loop through our db, find files with deleted events
        #do syncing stuff now
@@ -242,10 +245,10 @@ if __name__ == "__main__":
 
     event_handler = EventHandler()
     thread.start_new_thread(start_eventHandler, (None, None))
-    print "2nd thread"
+    #print "2nd thread"
 
     #thread.start_new_thread(start_commandLine, (None, None))
-    print "AYO out of sync"
+    #print "AYO out of sync"
 
     start_commandLine(None, None)
 

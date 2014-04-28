@@ -26,7 +26,7 @@ syncing = 1
 class SpecificEventHandler(FileSystemEventHandler):
 
 
-    def on_moved1(self, event):
+    def on_moved1(self, time, event):
         print "moved"
         print event.src_path
         print event.dest_path
@@ -35,13 +35,18 @@ class SpecificEventHandler(FileSystemEventHandler):
         dest = event.dest_path
 
         if "oneDir" not in dest:
-            self.on_deleted1(source)
-        else:
+            self.on_deleted1(source, time, 'deleted')
+        if source == None:
             source = dest
+            self.on_create1(source, time, event.event_type)
+        else:
+            self.on_deleted1(source, time, 'deleted')
+            source = dest
+            self.on_create1(source, time, event.event_type)
         return source
 
 
-    def on_deleted1(self, filePath):
+    def on_deleted1(self, filePath, time, eventType):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
@@ -58,8 +63,8 @@ class SpecificEventHandler(FileSystemEventHandler):
             print r.text
         with conn:
             c = conn.cursor()
-            sql_cmd = "update fileData set date stamp = ?, modification type = ? where file_path = ?"
-            c.execute(sql_cmd, (time, 'deleted', filePath))
+            sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
+            c.execute(sql_cmd, (time, eventType, filePath))
             conn.commit()
 
     def on_modified1(self, filePath, time, eventType):
@@ -72,7 +77,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
             serverId = int(c.fetchall()[0][0])
 
-            sql_cmd = "update fileData set date stamp = ?, modification type = ? where file_path = ?"
+            sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
             c.execute(sql_cmd, (time, eventType, filePath))
 
             conn.commit()
@@ -99,7 +104,6 @@ class SpecificEventHandler(FileSystemEventHandler):
         if (syncing == 1):
             with open(filePath, 'r') as f:
                 file_cont = f.read()
-            #import Test
             params = {'token':token, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
             #print r.status_code
