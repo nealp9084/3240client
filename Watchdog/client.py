@@ -143,21 +143,30 @@ class EventHandler(FileSystemEventHandler):
                 c.execute(sql_cmd, ("-1",))
                 query = c.fetchall()
           
-                #print "THIS IS WHERE -1"
-                #print query
                 for item in query:
                     (filePath, serverID, timeStamp, modType) = item
-                    with open('oneDir/'+filePath, 'r') as f:
-                        file_cont = f.read()
-                    params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
-                    r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
-                    #print r.text
-                    serverID = json.loads(r.text)["file_id"]
-                    c = conn.cursor()
-                    sql_cmd =( "update fileData set server_id = ? where file_path = ?")
-                    c.execute(sql_cmd, (serverID, filePath))
-                    conn.commit()
-                    #print "finished"
+                    if os.path.isfile('oneDir/'+filepath):
+                        with open('oneDir/'+filePath, 'r') as f:
+                            file_cont = f.read()
+
+                        params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
+                        r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
+                        if r.json()['success']:
+                            serverID = json.loads(r.text)["file_id"]
+                            c = conn.cursor()
+                            sql_cmd =( "update fileData set server_id = ? where file_path = ?")
+                            c.execute(sql_cmd, (serverID, filePath))
+                            conn.commit()
+                        else:
+                            c = conn.cursor()
+                            sql_cmd =( "delete from fileData where file_path = ?")
+                            c.execute(sql_cmd, (filePath,))
+                            conn.commit()
+                    else:
+                        c = conn.cursor()
+                        sql_cmd =( "delete from fileData where file_path = ?")
+                        c.execute(sql_cmd, (filePath,))
+                        conn.commit()
 
             conn = sqlite3.connect(database)
             with conn:
