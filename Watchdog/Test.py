@@ -74,9 +74,8 @@ class EventHandler(FileSystemEventHandler):
             print query
             if not query:
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
-                fileCont = download.content
-                with open('oneDir/'+file_name, 'wb') as f:
-                    print "++" + 'oneDir/'+file_name
+                fileCont = download.text
+                with open (file_name, 'w') as f:
                     f.write(fileCont)
 
                 conn = sqlite3.connect(database)
@@ -101,7 +100,7 @@ class EventHandler(FileSystemEventHandler):
                     elif tstamp > lastMod:
                         download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
-                        with open ('oneDir/'+file_name, 'wb') as f:
+                        with open (file_name, 'wb') as f:
                             f.write(fileCont.encode('utf-8'))
 
                         conn = sqlite3.connect(database)
@@ -118,7 +117,7 @@ class EventHandler(FileSystemEventHandler):
                          if mod == 'deleted':
                              specific.on_deleted1(path, time, mod)
                          else:
-                             with open('oneDir/'+file_name, 'r') as f:
+                             with open(file_name, 'r') as f:
                                  file_cont = f.read()
                              params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
                              upL = requests.post("http://"+SERVER+"/sync/%d/update_file/" %sId, data = params)
@@ -138,7 +137,7 @@ class EventHandler(FileSystemEventHandler):
                 print query
                 for item in query:
                     (filePath, serverID, timeStamp, modType) = item
-                    with open('oneDir/'+filePath, 'r') as f:
+                    with open(filePath, 'r') as f:
                         file_cont = f.read()
                     params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
                     r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
@@ -180,6 +179,12 @@ class EventHandler(FileSystemEventHandler):
                     EventHandler.sync_now()
             else:
                 print "Invalid Entry. Enter '1'"
+
+def sync_run(a, b):
+    while True:
+        time.sleep(20)
+        if allEvents.syncing == 1:
+            EventHandler.sync_now()
 
 def start_commandLine(a, b):
     EventHandler.command_line()
@@ -235,5 +240,7 @@ if __name__ == "__main__":
 
     #thread.start_new_thread(start_commandLine, (None, None))
     #print "AYO out of sync"
+
+    thread.start_new_thread(start_sync_run, (None, None))
 
     start_commandLine(None, None)
