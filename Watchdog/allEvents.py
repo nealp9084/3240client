@@ -123,9 +123,7 @@ class SpecificEventHandler(FileSystemEventHandler):
             #print r.status_code
             if r.json()['success']:
               message=Notify.Notification.new("File created",filePath,"dialog-information")
-            else:
-              message=Notify.Notification.new("FAILURE","Could not create file on server.","dialog-information")              
-            message.show()
+              message.show()
 
             with open("create.html", 'w') as f:
                 f.write(r.text)

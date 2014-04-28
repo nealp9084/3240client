@@ -30,7 +30,6 @@ class EventHandler(FileSystemEventHandler):
         print event
         if event.is_directory:
             return
-        #print("event noticed: " + event.event_type + " on file " + event.src_path + " at " + str(datetime.datetime.now()))
 
         eventType = event.event_type
         timeInfo = str(datetime.datetime.now())
@@ -63,7 +62,6 @@ class EventHandler(FileSystemEventHandler):
            sId = item["id"]
            mod_type = "modified"
 
-
            conn = sqlite3.connect(database)
            with conn:
             c = conn.cursor()
@@ -76,7 +74,6 @@ class EventHandler(FileSystemEventHandler):
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
                 fileCont = download.content
                 with open('oneDir/'+file_name, 'wb') as f:
-                    print "++" + 'oneDir/'+file_name
                     f.write(fileCont)
 
                 conn = sqlite3.connect(database)
@@ -150,13 +147,18 @@ class EventHandler(FileSystemEventHandler):
                     conn.commit()
                     print "finished"
 
-#loop through our db, find files with deleted events
-       #do syncing stuff now
-       #need to get server copy of database
-       #compare their copy of database to ours
-       #if database doesnt match then update theirs
+            conn = sqlite3.connect(database)
+            with conn:
+                c = conn.cursor()
 
+                sql_cmd = ("select * from fileData")
+                c.execute(sql_cmd)
+                query = c.fetchall()
 
+                for item in query:
+                     (filePath, serverID, timeStamp, modType) = item
+                     if not filePath in map(lambda x: x['local_path'], fileList):
+                         os.remove('oneDir/'+filePath)
 
     @staticmethod
     def command_line():
