@@ -99,12 +99,16 @@ class SpecificEventHandler(FileSystemEventHandler):
             #import Test
             params = {'token': token, "last_modified": time, 'file_data': file_cont}
             r = requests.post("http://" + SERVER + "/sync/%d/update_file/" %serverId, data = params)
+            msg_disp = False
             if r.status_code == 200:
                 if r.json()['success']:
                     message=Notify.Notification.new("File modified",filePath,"dialog-information")
+                    msg_disp = True
             else:
                 message=Notify.Notification.new("FAILURE","Could not modify file on server.","dialog-information")            
-            message.show()
+                msg_disp = True
+            if msg_dsp:
+                message.show()
 
             with open("file.html", 'w') as f:
                 f.write(r.text)
