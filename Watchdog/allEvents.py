@@ -50,7 +50,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
-        filePath = './'+filePath.split('oneDir/')[1]
+        filePath = filePath.split('oneDir/')[1]
 
         with conn:
             c = conn.cursor()
@@ -77,7 +77,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         token =  get_token()
         print "updating file"
         conn = sqlite3.connect(database)
-        filePath = './'+filePath.split('oneDir/')[1]
+        filePath = filePath.split('oneDir/')[1]
 
         with conn:
             c = conn.cursor()
@@ -92,7 +92,7 @@ class SpecificEventHandler(FileSystemEventHandler):
 
         #by this point will have server id
         if (syncing == 1):
-            with open(filePath, 'r') as f:
+            with open('oneDir/' + filePath, 'r') as f:
                 file_cont = f.read()
             #import Test
             params = {'token': token, "last_modified": time, 'file_data': file_cont}
@@ -110,12 +110,12 @@ class SpecificEventHandler(FileSystemEventHandler):
     def on_create1(self, filePath, time, eventType):
         #print "on create"
         token =  get_token()
-        filePath = './'+filePath.split('oneDir/')[1]
+        filePath = filePath.split('oneDir/')[1]
 
         #read file
         serverID = -1
         if (syncing == 1):
-            with open(filePath, 'r') as f:
+            with open('oneDir/' + filePath, 'r') as f:
                 file_cont = f.read()
             #import Test
             params = {'token':token, 'local_path': filePath, "last_modified": time, 'file_data': file_cont}
