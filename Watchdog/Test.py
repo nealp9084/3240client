@@ -23,21 +23,14 @@ from watchdog.events import FileSystemEventHandler
 database = 'fileData.db'
 specific = SpecificEventHandler()
 SERVER = '172.27.123.207:8000'
-#TOKEN = None
-
 
 class EventHandler(FileSystemEventHandler):
-
-
 
     def on_any_event(self, event):
         print event
         if event.is_directory:
             return
-
-
         #print("event noticed: " + event.event_type + " on file " + event.src_path + " at " + str(datetime.datetime.now()))
-
 
         eventType = event.event_type
         timeInfo = str(datetime.datetime.now())
@@ -104,7 +97,6 @@ class EventHandler(FileSystemEventHandler):
                     conn.commit()
                     if tstamp == lastMod:
                         1
-
                     elif tstamp > lastMod:
                         download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
@@ -137,7 +129,6 @@ class EventHandler(FileSystemEventHandler):
             with conn:
                 c = conn.cursor()
 
-              
                 sql_cmd = ("select * from fileData where server_id = ?")
                 c.execute(sql_cmd, ("-1",))
                 query = c.fetchall()
@@ -158,7 +149,6 @@ class EventHandler(FileSystemEventHandler):
                     conn.commit()
                     print "finished"
 
-
 #loop through our db, find files with deleted events
        #do syncing stuff now
        #need to get server copy of database
@@ -169,9 +159,7 @@ class EventHandler(FileSystemEventHandler):
 
     @staticmethod
     def command_line():
-
         sync = allEvents.syncing
-
         while True:
             print 'Enter a number to perform the corresponding task'
             if (sync == 1):
@@ -191,8 +179,6 @@ class EventHandler(FileSystemEventHandler):
                     EventHandler.sync_now()
             else:
                 print "Invalid Entry. Enter '1'"
-
-            print
 
 def start_commandLine(a, b):
     EventHandler.command_line()
@@ -240,7 +226,6 @@ if __name__ == "__main__":
     print "just got token" + TOKEN
     EventHandler.sync_now()
 
-
     # EventHandler.command_line()
 
     event_handler = EventHandler()
@@ -251,13 +236,3 @@ if __name__ == "__main__":
     #print "AYO out of sync"
 
     start_commandLine(None, None)
-
-
-
-
-
-
-
-#git add "filename"
-#git commit -m "messageiwant"
-#git push

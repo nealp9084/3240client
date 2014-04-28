@@ -30,7 +30,6 @@ Notify.init ("Watchdog")
 
 class SpecificEventHandler(FileSystemEventHandler):
 
-
     def on_moved1(self, time, event):
         print "moved"
         print event.src_path
@@ -50,11 +49,12 @@ class SpecificEventHandler(FileSystemEventHandler):
             self.on_create1(source, time, event.event_type)
         return source
 
-
     def on_deleted1(self, filePath, time, eventType):
         #print "on_deleted1"
         token =  get_token()
         conn = sqlite3.connect(database)
+        filePath = './'+filePath.split('Watchdog/')[1]
+
         with conn:
             c = conn.cursor()
             c.execute('''select server_id from fileData where file_path = ?''', (filePath,))
@@ -80,6 +80,7 @@ class SpecificEventHandler(FileSystemEventHandler):
         token =  get_token()
         print "updating file"
         conn = sqlite3.connect(database)
+        filePath = './'+filePath.split('Watchdog/')[1]
 
         with conn:
             c = conn.cursor()
@@ -112,6 +113,7 @@ class SpecificEventHandler(FileSystemEventHandler):
     def on_create1(self, filePath, time, eventType):
         #print "on create"
         token =  get_token()
+        filePath = './'+filePath.split('Watchdog/')[1]
 
         #read file
         serverID = -1
@@ -138,8 +140,3 @@ class SpecificEventHandler(FileSystemEventHandler):
             sql_cmd = "insert into fileData values(?, ?, ?, ?)"
             c.execute(sql_cmd, (filePath, serverID, time, eventType))
             conn.commit()
-
-
-
-
-
