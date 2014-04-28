@@ -21,7 +21,7 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 syncing = 1
-SERVER = "127.0.0.1:8000"
+SERVER = "172.27.123.207:8000"
 Notify.init ("Watchdog")
 
 

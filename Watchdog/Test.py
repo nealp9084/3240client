@@ -22,7 +22,7 @@ from watchdog.events import FileSystemEventHandler
 
 database = 'fileData.db'
 specific = SpecificEventHandler()
-SERVER = 'localhost:8000'
+SERVER = '172.27.123.207:8000'
 #TOKEN = None
 
 
@@ -60,7 +60,7 @@ class EventHandler(FileSystemEventHandler):
     
     @staticmethod
     def sync_now():
-       r = requests.get("http://localhost:8000/sync/?token=%s" %TOKEN)
+       r = requests.get("http://"+SERVER+"/sync/?token=%s" %TOKEN)
        fileList = r.json()
        for item in fileList:
            print item
@@ -80,7 +80,7 @@ class EventHandler(FileSystemEventHandler):
             conn.commit()
             print query
             if not query:
-                download = requests.get("http://localhost:8000/sync/%d/serve_file?token=%s" %(sId, TOKEN))
+                download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
                 fileCont = download.text
                 with open (file_name, 'w') as f:
                     f.write(fileCont)
@@ -106,7 +106,7 @@ class EventHandler(FileSystemEventHandler):
                         1
 
                     elif tstamp > lastMod:
-                        download = requests.get("http://localhost:8000/sync/%d/serve_file?token=%s" %(sId,TOKEN))
+                        download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
                         with open (file_name, 'wb') as f:
                             f.write(fileCont.encode('utf-8'))
@@ -128,7 +128,7 @@ class EventHandler(FileSystemEventHandler):
                              with open(file_name, 'r') as f:
                                  file_cont = f.read()
                              params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
-                             upL = requests.post("http://localhost:8000/sync/%d/update_file/" %sId, data = params)
+                             upL = requests.post("http://"+SERVER+"/sync/%d/update_file/" %sId, data = params)
                              code = upL.status_code
                              print code
             #dump fileData
@@ -149,7 +149,7 @@ class EventHandler(FileSystemEventHandler):
                     with open(filePath, 'r') as f:
                         file_cont = f.read()
                     params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
-                    r = requests.post("http://127.0.0.1:8000/sync/create_server_file/", data = params)
+                    r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
                     print r.text
                     serverID = json.loads(r.text)["file_id"]
                     c = conn.cursor()

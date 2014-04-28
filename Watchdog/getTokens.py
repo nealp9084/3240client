@@ -18,7 +18,7 @@ import json
 
 #database = 'fileData.db'
 #specific = SpecificEventHandler()
-SERVER = 'localhost:8000'
+SERVER = '172.27.123.207:8000'
 TOKEN = None
 
 
