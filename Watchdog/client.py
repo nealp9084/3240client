@@ -56,7 +56,6 @@ class EventHandler(FileSystemEventHandler):
        r = requests.get("http://"+SERVER+"/sync/?token=%s" %TOKEN)
        fileList = r.json()
        for item in fileList:
-           #print item
            file_name = item["local_path"]
            timeS= item["last_modified"]
            tstamp = dateutil.parser.parse(timeS).replace(tzinfo = None)
@@ -142,11 +141,10 @@ class EventHandler(FileSystemEventHandler):
            sql_cmd = ("select * from fileData where server_id = ?")
            c.execute(sql_cmd, ("-1",))
            query = c.fetchall()
-           print '*** this is where -1!!!! ***'
           
            for item in query:
                (filePath, serverID, timeStamp, modType) = item
-               if os.path.isfile('oneDir/'+filepath):
+               if os.path.isfile('oneDir/'+filePath):
                    with open('oneDir/'+filePath, 'r') as f:
                        file_cont = f.read()
 
