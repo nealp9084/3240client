@@ -70,11 +70,6 @@ class SpecificEventHandler(FileSystemEventHandler):
             else:
               message=Notify.Notification.new("FAILURE","Could not delete file on server.","dialog-information")            
             message.show()
-
-            #print r.text
-            import Test
-            r = requests.delete("http://127.0.0.1:8000/sync/" +  str(serverId) + "/delete_file/?token=%s" %token)
-            print r.text
         with conn:
             c = conn.cursor()
             sql_cmd = "update fileData set date_stamp = ?, modification_type = ? where file_path = ?"
