@@ -74,8 +74,9 @@ class EventHandler(FileSystemEventHandler):
             print query
             if not query:
                 download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId, TOKEN))
-                fileCont = download.text
-                with open (file_name, 'w') as f:
+                fileCont = download.content
+                with open('oneDir/'+file_name, 'wb') as f:
+                    print "++" + 'oneDir/'+file_name
                     f.write(fileCont)
 
                 conn = sqlite3.connect(database)
@@ -100,7 +101,7 @@ class EventHandler(FileSystemEventHandler):
                     elif tstamp > lastMod:
                         download = requests.get("http://"+SERVER+"/sync/%d/serve_file?token=%s" %(sId,TOKEN))
                         fileCont = download.text
-                        with open (file_name, 'wb') as f:
+                        with open ('oneDir/'+file_name, 'wb') as f:
                             f.write(fileCont.encode('utf-8'))
 
                         conn = sqlite3.connect(database)
@@ -117,7 +118,7 @@ class EventHandler(FileSystemEventHandler):
                          if mod == 'deleted':
                              specific.on_deleted1(path, time, mod)
                          else:
-                             with open(file_name, 'r') as f:
+                             with open('oneDir/'+file_name, 'r') as f:
                                  file_cont = f.read()
                              params = {'token':TOKEN, "last_modified": lastMod, 'file_data': file_cont}
                              upL = requests.post("http://"+SERVER+"/sync/%d/update_file/" %sId, data = params)
@@ -137,7 +138,7 @@ class EventHandler(FileSystemEventHandler):
                 print query
                 for item in query:
                     (filePath, serverID, timeStamp, modType) = item
-                    with open(filePath, 'r') as f:
+                    with open('oneDir/'+filePath, 'r') as f:
                         file_cont = f.read()
                     params = {'token':TOKEN, 'local_path': filePath, "last_modified": timeStamp, 'file_data': file_cont}
                     r = requests.post("http://"+SERVER+"/sync/create_server_file/", data = params)
