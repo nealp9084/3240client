@@ -125,7 +125,7 @@ class EventHandler(FileSystemEventHandler):
                          time = query[0][1]
                          mod = query[0][2]
                          if mod == 'deleted':
-                             specific.on_deleted1(path, time, mod)
+                             specific.on_deleted1('oneDir/'+path, time, mod)
                          else:
                              with open('oneDir/'+file_name, 'r') as f:
                                  file_cont = f.read()
