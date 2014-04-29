@@ -108,9 +108,6 @@ class SpecificEventHandler(FileSystemEventHandler):
             if msg_disp:
                 message.show()
 
-            with open("file.html", 'w') as f:
-                f.write(r.text)
-
 
     def on_create1(self, filePath, time, eventType):
         #print "on create"
@@ -129,9 +126,6 @@ class SpecificEventHandler(FileSystemEventHandler):
             if r.json()['success']:
               message=Notify.Notification.new("File created",filePath,"dialog-information")
               message.show()
-
-            with open("create.html", 'w') as f:
-                f.write(r.text)
 
             serverID = json.loads(r.text)["file_id"]
         conn = sqlite3.connect(database)
